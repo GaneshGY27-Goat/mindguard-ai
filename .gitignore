@@ -26,3 +26,8 @@ yarn-error.log*
 Thumbs.db
 .vscode/
 .idea/
+
+# Executables & Binaries
+*.exe
+cloudflared.exe
+

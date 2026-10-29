@@ -150,10 +150,11 @@ export const StressGauge: React.FC<StressGaugeProps> = ({ score, level }) => {
         <p className="text-xs text-slate-300 font-medium px-4">
           {config.subtext}
         </p>
-        <p className="text-[10px] text-slate-500 italic">
-          Estimated wellness risk indicator • Not a clinical medical diagnosis
-        </p>
+        <div className="bg-slate-900/60 p-2 rounded-xl border border-slate-800 text-[10px] text-slate-400">
+          Experimental wellness score • Non-medical estimate • Not a diagnosis or clinical prediction
+        </div>
       </div>
+
     </div>
   );
 };

@@ -1,10 +1,19 @@
 # MindGuard AI – Early Mental Wellness Warning & Support System
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-GitHub%20Pages-teal?style=for-the-badge&logo=github)](https://ganeshgy27-goat.github.io/mindguard-ai/)
+[![GitHub Repo](https://img.shields.io/badge/GitHub-Repository-181717?style=for-the-badge&logo=github)](https://github.com/GaneshGY27-Goat/mindguard-ai)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+
+> 🌐 **Universal Live Web App Link:**  
+> **[https://ganeshgy27-goat.github.io/mindguard-ai/](https://ganeshgy27-goat.github.io/mindguard-ai/)**  
+> Access the complete responsive MindGuard AI application directly from any modern mobile, tablet, or desktop browser with zero installation or server dependencies.
+
 > **Prototype / Demonstration System Notice**  
 > MindGuard AI is an experimental healthcare innovation prototype designed to estimate stress and mental wellness risk based on available proxy signals and provide non-medical supportive recommendations.  
 > **It is NOT a medical diagnostic device.** It does **NOT** diagnose depression, anxiety disorders, or panic attacks with certainty, and does **NOT** prescribe medical treatment. Always consult certified healthcare professionals for clinical evaluation.
 
 ---
+
 
 ## 1. Project Overview
 
@@ -22,21 +31,34 @@ MindGuard AI demonstrates how an intelligent system can continuously synthesize 
 
 ---
 
-## 3. Key Objectives
+## 3. Key Features & Enhancements
 
-1. **Multi-Signal Telemetry Fusion:** Combine Heart Rate (BPM), Blood Oxygen (SpO₂), Physical Activity (Steps), Sleep Duration, Subjective Mood, and Vocal Acoustic Tension into a single unified assessment.
-2. **Explainable Risk Scoring:** Compute an intuitive **Stress Risk Score from 0–100** categorized into 4 actionable tiers:
-   * `0–30` → **NORMAL**
-   * `31–60` → **MODERATE**
-   * `61–80` → **HIGH**
-   * `81–100` → **VERY HIGH**
-3. **Immediate Supportive Interventions:** Provide calming non-clinical tools, such as an interactive 4-4-6 diaphragmatic breathing exercise, empathetic AI assistant guidance, and 1-click trusted contact outreach.
-4. **Physical & Simulated Wearable Extensibility:** Support real-time streaming simulation for demonstrations, while providing ready firmware blueprints for ESP32 + MAX30102 + MPU6050 physical hardware.
-5. **Decoupled Architecture for Future ML:** Pure separation of concerns allowing the transparent mathematical heuristic scoring engine to be swapped with trained Random Forest, XGBoost, or LSTM models.
+1. **Interactive Mood Journal (Offline & LocalStorage):**
+   * Multi-mood selector with expressive emojis and semantic wellness labels.
+   * Granular stress-level selector (1 to 10) with contextual stage descriptions.
+   * Optional short journal reflection notes (with real-time character limit validation).
+   * 100% private in-browser `localStorage` persistence with previous entry timeline and dates.
+   * Full data sovereignty: individual entry deletion and one-click data clear with confirmation banners.
+2. **Interactive Breathing Exercise (60-Second Vagal Nerve Pacing):**
+   * Complete pacing control suite: **Start**, **Pause**, **Resume**, and **Reset** buttons.
+   * Smoothly expanding and contracting animated breathing circle with guided 4-4-6 pacing (Inhale 4s, Hold 4s, Exhale 6s).
+   * Dedicated 60-second session countdown and animated progress bar.
+   * Rewarding completion celebration screen detailing autonomic recovery benefits.
+   * Full accessibility compliance: `aria-live` screen-reader announcements, touch targets >= 44px, and `prefers-reduced-motion` support.
+3. **Wellness History Dashboard ("My Trends"):**
+   * Weekly mood and stress trend chart dynamically generated from **genuine saved check-in records**.
+   * Total completed check-in counter and dynamic statistical weekly summary.
+   * Encouraging, helpful empty state when no entries exist (**zero fabricated or synthetic data**).
+4. **Explainable Wellness Score & Formula Breakdown:**
+   * Transparent linear composite formula detailing the exact weights of all 6 multi-signal inputs:
+     `Score = (0.25 × Heart Rate) + (0.20 × Sleep) + (0.20 × Mood/Stress) + (0.20 × Voice) + (0.10 × Activity) + (0.05 × SpO₂)`
+   * Factor-level attribution highlighting the primary signals elevating or calming today's score.
+   * Prominent non-medical, experimental prototype disclaimers with zero false clinical diagnostic claims.
+5. **Privacy & Accessibility Architecture:**
+   * Complete transparency: data remains strictly in the current browser's local storage and does not sync across devices.
+   * Dedicated Privacy Modal with live local storage metrics, JSON data export, and complete data erasure controls.
+   * Zero mandatory tracking cookies, analytics pixels, or external API keys.
 
----
-
-## 4. "Why This Is Innovative"
 
 1. **Holistic Multi-Modal Fusion:** Rather than relying solely on heart rate or purely subjective mood journals, MindGuard AI bridges the gap between *objective somatic vitals* and *subjective psychological states*.
 2. **Transparent Explainability:** Black-box AI causes anxiety. MindGuard AI details the exact percentage influence and status of every biomarker driving the user's score.
@@ -273,3 +295,34 @@ For testing the authentication flow:
 * **Manual Credentials:**
   * **Email:** `alex.mercer@example.com`
   * **Password:** `MindGuard2026!`
+
+---
+
+## 16. GitHub Pages Deployment & Local Testing
+
+The frontend is fully static, client-side, and designed to run out-of-the-box on GitHub Pages with zero required backend dependencies.
+
+### Live Production Deployment
+* **Live Site:** [https://ganeshgy27-goat.github.io/mindguard-ai/](https://ganeshgy27-goat.github.io/mindguard-ai/)
+* **Automated CI/CD:** Any push to `main` triggers `.github/workflows/deploy.yml` which builds `frontend` and publishes `frontend/dist` to GitHub Pages.
+
+### Local Development Steps
+1. Navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the local development server:
+   ```bash
+   npm run dev
+   ```
+   Open `http://localhost:3000/` in your browser.
+4. Verify Production Build:
+   ```bash
+   npm run build
+   ```
+   Ensures TypeScript compilation passes cleanly and generates the optimized production bundle in `dist/`.
+

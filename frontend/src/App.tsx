@@ -30,7 +30,8 @@ import { SosModal } from './components/SosModal';
 import { LandingPage } from './components/LandingPage';
 import { AuthModal } from './components/AuthModal';
 import { DemoModeTour } from './components/DemoModeTour';
-import { AlertTriangle, ShieldCheck, Heart } from 'lucide-react';
+import { PrivacyModal } from './components/PrivacyModal';
+import { AlertTriangle, ShieldCheck, Heart, Shield } from 'lucide-react';
 
 export const App: React.FC = () => {
   // Navigation & view states
@@ -44,6 +45,8 @@ export const App: React.FC = () => {
   const [showSos, setShowSos] = useState<boolean>(false);
   const [showAuth, setShowAuth] = useState<boolean>(false);
   const [showDemoTour, setShowDemoTour] = useState<boolean>(false);
+  const [showPrivacy, setShowPrivacy] = useState<boolean>(false);
+
 
   // User state
   const [currentUser, setCurrentUser] = useState<{ name: string; email: string }>({
@@ -205,8 +208,14 @@ export const App: React.FC = () => {
     setRisk(updated.risk);
   };
 
-  const handleSaveMood = async (score: number, label: string, notes?: string) => {
-    const entry = await submitMoodEntry({ score, label, notes });
+  const handleSaveMood = async (
+    score: number,
+    label: string,
+    notes?: string,
+    emoji?: string,
+    stressLevel?: number
+  ) => {
+    const entry = await submitMoodEntry({ score, label, notes, emoji, stressLevel });
     setRecentMoods((prev) => [entry, ...prev]);
     const updated = await sendSensorData({ moodScore: score });
     setReading(updated.reading);
@@ -226,6 +235,7 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onOpenSettings={() => setShowTrustedContact(true)}
+        onOpenPrivacy={() => setShowPrivacy(true)}
         onOpenAuth={() => setShowAuth(true)}
         onOpenSos={() => setShowSos(true)}
         onStartDemoMode={() => {
@@ -262,8 +272,12 @@ export const App: React.FC = () => {
             }}
           />
         ) : activeTab === 'trends' ? (
-          <TrendsView onBackToDashboard={() => setActiveTab('dashboard')} />
+          <TrendsView
+            onBackToDashboard={() => setActiveTab('dashboard')}
+            onOpenMoodModal={() => setShowMoodModal(true)}
+          />
         ) : (
+
           /* Main Interactive Dashboard */
           <div className="space-y-6 animate-in fade-in duration-300">
             {/* Top Prototype Notice Banner */}
@@ -334,14 +348,23 @@ export const App: React.FC = () => {
       />
 
       {/* Footer */}
-      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 mt-12 text-center text-xs text-slate-500 space-y-1">
+      <footer className="border-t border-slate-900 bg-slate-950/80 py-6 mt-12 text-center text-xs text-slate-500 space-y-2">
         <div className="flex items-center justify-center gap-1.5 text-slate-400 font-semibold">
           <Heart className="w-3.5 h-3.5 text-teal-400" />
           <span>MindGuard AI Prototype • Engineering Innovation in Early Mental Wellness Warning</span>
         </div>
-        <p className="text-[11px] text-slate-600">
-          This system is an experimental healthcare engineering demo. It does not diagnose, treat, or cure medical conditions.
+        <p className="text-[11px] text-slate-600 max-w-xl mx-auto px-4">
+          This system is an experimental wellness engineering prototype. It does not diagnose, treat, or cure medical conditions. All journal entries and metrics remain securely in local storage.
         </p>
+        <div className="pt-1">
+          <button
+            onClick={() => setShowPrivacy(true)}
+            className="text-[11px] text-teal-400 hover:text-teal-300 underline font-medium inline-flex items-center gap-1 transition"
+          >
+            <Shield className="w-3 h-3" />
+            <span>Privacy Policy & Local Storage Controls</span>
+          </button>
+        </div>
       </footer>
 
       {/* Interactive Modals */}
@@ -386,6 +409,15 @@ export const App: React.FC = () => {
         onClose={() => setShowAuth(false)}
         onLoginSuccess={(usr) => setCurrentUser(usr)}
       />
+
+      <PrivacyModal
+        isOpen={showPrivacy}
+        onClose={() => setShowPrivacy(false)}
+        onDataCleared={() => {
+          setRecentMoods([]);
+        }}
+      />
+
     </div>
   );
 };

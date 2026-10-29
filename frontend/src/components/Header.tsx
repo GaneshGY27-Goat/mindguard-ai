@@ -3,6 +3,7 @@ import {
   Heart,
   Activity,
   ShieldCheck,
+  Shield,
   Settings,
   User,
   AlertOctagon,
@@ -16,6 +17,7 @@ interface HeaderProps {
   activeTab: 'dashboard' | 'trends' | 'landing';
   onSelectTab: (tab: 'dashboard' | 'trends' | 'landing') => void;
   onOpenSettings: () => void;
+  onOpenPrivacy?: () => void;
   onOpenAuth: () => void;
   onOpenSos: () => void;
   onStartDemoMode: () => void;
@@ -27,12 +29,14 @@ export const Header: React.FC<HeaderProps> = ({
   activeTab,
   onSelectTab,
   onOpenSettings,
+  onOpenPrivacy,
   onOpenAuth,
   onOpenSos,
   onStartDemoMode,
   isBackendLive,
   currentUser
 }) => {
+
   return (
     <header className="sticky top-0 z-40 glass-panel border-b border-slate-800/80 backdrop-blur-xl">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -133,14 +137,28 @@ export const Header: React.FC<HeaderProps> = ({
             <span>SOS</span>
           </button>
 
+          {/* Privacy & Data Management */}
+          {onOpenPrivacy && (
+            <button
+              onClick={onOpenPrivacy}
+              title="Privacy & Local Storage Data Management"
+              aria-label="Privacy & Local Storage Data Management"
+              className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-teal-400 hover:text-white border border-slate-800 transition focus:outline-none focus:ring-2 focus:ring-teal-400"
+            >
+              <Shield className="w-4 h-4" />
+            </button>
+          )}
+
           {/* Settings button */}
           <button
             onClick={onOpenSettings}
             title="Trusted Contact & Settings"
-            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition"
+            aria-label="Trusted Contact & Settings"
+            className="p-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-800 transition focus:outline-none focus:ring-2 focus:ring-teal-400"
           >
             <Settings className="w-4 h-4" />
           </button>
+
 
           {/* User profile */}
           <button

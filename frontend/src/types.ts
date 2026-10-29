@@ -42,7 +42,10 @@ export interface MoodEntry {
   score: number;
   label: 'Very Good' | 'Good' | 'Okay' | 'Low' | 'Very Low';
   notes?: string;
+  stressLevel?: number;
+  moodEmoji?: string;
 }
+
 
 export interface StressRecord {
   id: string;

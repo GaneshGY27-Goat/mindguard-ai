@@ -3,9 +3,11 @@ import {
   RiskAnalysisResult,
   MoodEntry,
   TrendsData,
+  StressRecord,
   TrustedContact,
   ChatMessage
 } from '../types';
+
 
 const API_BASE = '/api';
 
@@ -78,50 +80,77 @@ export async function triggerResetNormal(): Promise<{
   }
 }
 
+import {
+  getMoodEntries,
+  saveMoodEntry,
+  toLegacyMoodEntry,
+  MoodJournalEntry
+} from './storage';
+
 export async function submitMoodEntry(entry: {
   score: number;
   label: string;
+  emoji?: string;
+  stressLevel?: number;
   notes?: string;
 }): Promise<MoodEntry> {
+  // Always persist locally to localStorage
+  const savedLocal = saveMoodEntry({
+    moodLabel: entry.label as any,
+    moodEmoji: entry.emoji || '🙂',
+    moodScore: entry.score,
+    stressLevel: entry.stressLevel ?? (11 - Math.min(10, Math.max(1, entry.score))),
+    notes: entry.notes
+  });
+
   try {
     const res = await fetch(`${API_BASE}/mood`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(entry)
     });
-    const data = await res.json();
-    return data.entry;
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        ...data.entry,
+        stressLevel: savedLocal.stressLevel,
+        moodEmoji: savedLocal.moodEmoji
+      };
+    }
+    return toLegacyMoodEntry(savedLocal);
   } catch (err) {
-    return {
-      id: `mood_${Date.now()}`,
-      userId: 'usr_demo',
-      timestamp: new Date().toISOString(),
-      score: entry.score,
-      label: entry.label as any,
-      notes: entry.notes
-    };
+    return toLegacyMoodEntry(savedLocal);
   }
 }
 
 export async function fetchMoodHistory(): Promise<MoodEntry[]> {
   try {
     const res = await fetch(`${API_BASE}/mood`);
-    const data = await res.json();
-    return data.history;
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data.history) && data.history.length > 0) {
+        return data.history;
+      }
+    }
+    return getMoodEntries().map(toLegacyMoodEntry);
   } catch (err) {
-    return [];
+    return getMoodEntries().map(toLegacyMoodEntry);
   }
 }
 
 export async function fetchTrends(timeframe: 'today' | '7days' | '30days'): Promise<TrendsData> {
   try {
     const res = await fetch(`${API_BASE}/stress/trends?timeframe=${timeframe}`);
-    const data = await res.json();
-    return data.trends;
+    if (res.ok) {
+      const data = await res.json();
+      return data.trends;
+    }
+    return generateFallbackTrends(timeframe);
   } catch (err) {
     return generateFallbackTrends(timeframe);
   }
 }
+
 
 export async function sendChatMessage(message: string): Promise<ChatMessage> {
   try {
@@ -276,32 +305,84 @@ function calculateClientFallback(reading: Partial<SensorReading>): {
 }
 
 function generateFallbackTrends(timeframe: 'today' | '7days' | '30days'): TrendsData {
-  const count = timeframe === 'today' ? 8 : timeframe === '7days' ? 7 : 30;
-  const records: any[] = [];
+  const allEntries = getMoodEntries();
   const now = Date.now();
-  for (let i = count - 1; i >= 0; i--) {
-    const time = new Date(now - i * (timeframe === 'today' ? 2 * 3600 * 1000 : 24 * 3600 * 1000));
-    records.push({
-      id: `str_${i}`,
-      timestamp: time.toISOString(),
-      riskScore: 25 + Math.round(Math.sin(i * 0.7) * 15),
-      heartRate: 70 + Math.round(Math.cos(i * 0.5) * 8),
-      sleepHours: 7.2 + Math.sin(i * 0.4) * 0.8,
-      moodScore: 7 + Math.round(Math.cos(i * 0.6) * 1.5),
-      steps: 6200 + Math.round(Math.sin(i) * 2000)
-    });
+  const maxDays = timeframe === 'today' ? 1 : timeframe === '7days' ? 7 : 30;
+  const cutoff = now - maxDays * 24 * 60 * 60 * 1000;
+
+  // Filter entries within the timeframe and sort chronologically (oldest to newest)
+  const filtered = allEntries
+    .filter((e) => new Date(e.timestamp).getTime() >= cutoff)
+    .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+  if (filtered.length === 0) {
+    return {
+      timeframe,
+      records: [],
+      summary: {
+        avgStress: 0,
+        avgSleep: 0,
+        avgHeartRate: 0,
+        avgMood: 0,
+        totalObservations: 0,
+        trendDirection: 'improving'
+      },
+      aiInsight: 'No check-in entries recorded for this period. Log your daily mood and stress to generate your personalized wellness history.'
+    };
   }
+
+  const records: StressRecord[] = filtered.map((e) => {
+    // Map stress level 1-10 to risk score 0-100
+    const riskScore = Math.round(e.stressLevel * 10);
+    let riskLevel: 'NORMAL' | 'MODERATE' | 'HIGH' | 'VERY HIGH' = 'NORMAL';
+    if (riskScore > 80) riskLevel = 'VERY HIGH';
+    else if (riskScore > 60) riskLevel = 'HIGH';
+    else if (riskScore > 30) riskLevel = 'MODERATE';
+
+    return {
+      id: e.id,
+      userId: 'usr_local',
+      timestamp: e.timestamp,
+      riskScore,
+      riskLevel,
+      heartRate: 65 + Math.round((e.stressLevel / 10) * 25),
+      spo2: 98,
+      steps: 6400,
+      sleepHours: 7.3,
+      moodScore: e.moodScore,
+      voiceStress: e.stressLevel >= 8 ? 'HIGH' : e.stressLevel >= 5 ? 'MEDIUM' : 'LOW'
+    };
+  });
+
+  const avgStressVal = Number(
+    (filtered.reduce((sum, e) => sum + e.stressLevel, 0) / filtered.length).toFixed(1)
+  );
+  const avgMoodVal = Number(
+    (filtered.reduce((sum, e) => sum + e.moodScore, 0) / filtered.length).toFixed(1)
+  );
+  const avgRiskScore = Math.round(avgStressVal * 10);
+
+  const firstEntry = filtered[0];
+  const lastEntry = filtered[filtered.length - 1];
+  const trendDirection =
+    lastEntry.stressLevel < firstEntry.stressLevel
+      ? 'improving'
+      : lastEntry.stressLevel > firstEntry.stressLevel
+      ? 'elevated'
+      : 'improving';
+
   return {
     timeframe,
     records,
     summary: {
-      avgStress: 38,
+      avgStress: avgRiskScore,
       avgSleep: 7.3,
       avgHeartRate: 72,
-      avgMood: 6.8,
-      totalObservations: count,
-      trendDirection: 'improving'
+      avgMood: avgMoodVal,
+      totalObservations: filtered.length,
+      trendDirection
     },
-    aiInsight: 'Your average stress score has decreased over the last 7 days. Regular sleep patterns and consistent daily steps appear to be associated with lower stress scores in this prototype dataset.'
+    aiInsight: `Based on your ${filtered.length} recorded check-in${filtered.length > 1 ? 's' : ''}, your average reported stress level is ${avgStressVal}/10 and your average mood score is ${avgMoodVal}/10. Continuous check-ins help identify personal wellness patterns.`
   };
 }
+
